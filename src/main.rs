@@ -2,6 +2,7 @@ extern crate ncurses;
 
 use ncurses::*;
 use rand::prelude::*;
+use std::env::args;
 
 fn snake() -> String {
     // Initialize ncurses
@@ -12,6 +13,16 @@ fn snake() -> String {
     nodelay(stdscr(), true);
     timeout(100);
     keypad(stdscr(), true);
+    start_color();
+    if args().count() > 1 && args().nth(1).unwrap() == "--color" {
+        init_pair(1, COLOR_WHITE, -1);
+        init_pair(2, COLOR_GREEN, -1);
+        init_pair(3, COLOR_RED, -1);
+    } else {
+        init_pair(1, -1, -1);
+        init_pair(2, -1, -1);
+        init_pair(3, -1, -1);
+    }
 
     // Set global variables
     let ROWS: i32 = getmaxy(stdscr()) - 1;
@@ -34,6 +45,7 @@ fn snake() -> String {
     let mut rng = rand::thread_rng();
 
     // draw board
+    color_set(1);
     for y in 0..ROWS {
         for x in 0..COLS {
             mvaddstr(y, x, CHAR_BG);
@@ -41,13 +53,16 @@ fn snake() -> String {
     }
 
     // draw snake
+    color_set(2);
     for i in 0..snake.len() {
         mvaddstr(snake[i].0, snake[i].1, CHAR_SNAKE);
     }
 
     // draw food
+    color_set(3);
     mvaddstr(food.0, food.1, CHAR_FOOD);
 
+    color_set(1);
     mvaddstr(ROWS, 0, "Controls: wasd or arrow keys, q to quit | Score: 0");
 
     // main loop
@@ -90,14 +105,18 @@ fn snake() -> String {
                     );
                     food = if !snake.contains(&new_food) { new_food } else { (0, 0) };
                 }
+                color_set(3);
                 mvaddstr(food.0, food.1, CHAR_FOOD);
                 score += 1;
             } else {
                 tail = snake.pop().unwrap();
+                color_set(1);
                 mvaddstr(tail.0, tail.1, CHAR_BG);
             }
+            color_set(2);
             mvaddstr(snake[0].0, snake[0].1, CHAR_SNAKE);
         }
+        color_set(1);
         mvaddstr(ROWS, 49, &score.to_string());
         refresh();
     }
